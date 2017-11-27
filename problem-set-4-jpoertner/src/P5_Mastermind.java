@@ -1,113 +1,148 @@
+package com.wernercd;
 import java.util.Random;
 import java.util.Scanner;
 
-/*
-  	ISYS 320
-  	Name(s):
-  	Date: 
-*/
+public class Main {
+    public static void main(String[] args) {
+        Random rand = new Random();
+        Scanner input = new Scanner(System.in);
 
-public class P5_Mastermind {
+        boolean cheat,won ;
+        int attempt;
+        String answer,guess;
 
-	public static void printWelcomeMessage() {
-		System.out.println("Welcome to MASTERMIND");
-		System.out.println("The possible color pegs are (R)ed, (O)range, (Y)ellow,");
-		System.out.println("(G)reen, (B)lue, (P)urple. The code is only 4 pegs long.");
-		System.out.println();
-	}
+        do {
+            /* Reset variables */
+            cheat = true;
+            attempt = 0;
+            answer = getAnswer(rand);
 
-	public static void main(String[] args) {
-		Random rand = new Random();
-		Scanner input = new Scanner(System.in);
+            /* Game loop */
+            printWelcomeMessage();
+            printCheat(cheat, answer);
+            do {
+                attempt++;
+                guess = getGuess(input, attempt);
+                won = VerifyGuess(answer, guess, attempt);
+            } while (attempt <= 10 && won == false);
+            printResults(won, attempt, answer);
+        } while (printDoYouWantToPlayAgain(input));
+    }
 
-		printWelcomeMessage();
-		String code = getCode(rand);
+    public static void printWelcomeMessage() {
+        System.out.println("Welcome to MASTERMIND");
+        System.out.println("The possible color pegs are (R)ed, (O)range, (Y)ellow,");
+        System.out.println("(G)reen, (B)lue, (P)urple. The code is only 4 pegs long.");
+        System.out.println();
+    }
+    public static void printCheat(Boolean cheat, String answer){
+        if (cheat)
+            System.out.println("Hey cheater, the code is : \"" + answer + "\"");
+    }
+    public static void printResults(Boolean won, Integer attempt, String answer){
+        if (won) {
+            if (attempt == 1) {
+                System.out.println("You got it in " + attempt + " guess.");
+            } else {
+                System.out.println("You got it in " + attempt + " guesses.");
+            }
+        } else {
+            System.out.println("You failed to get the correct answer (\"" + answer + "\") in 10 guesses. " +
+                    "Loser. Luh... hu. Su. Hur.");
+        }
+    }
+    public static boolean printDoYouWantToPlayAgain(Scanner input) {
+        do {
+            System.out.println("Play another game? (y/n)");
+            String yn = input.next();
+            if (yn.equals("Y") || yn.equals("y")) {
+                return true;
+            }
+            if (yn.equals("N") || yn.equals("n")) {
+                return true;
+            }
+        } while (true);
+    }
 
-		System.out.println("The code was " + code);
-		breakerAttempts(code, input);
+    public static String getAnswer(Random rand) {
+        String code = "";
+        for (int num = 1; num <= 4; num++) {
+            int letter = rand.nextInt(6);
 
-		System.out.print("The code was " + code);
-	}
+            if (letter == 0) {
+                code += "R";
+            } else if (letter == 1) {
+                code += "O";
+            } else if (letter == 2) {
+                code += "Y";
+            } else if (letter == 3) {
+                code += "G";
+            } else if (letter == 4) {
+                code += "B";
+            } else {
+                code += "P";
+            }
+        }
+        return code;
+    }
+    public static String getGuess(Scanner input, Integer num){
+        do {
+            System.out.println("Please enter guess #"+num+":");
+            String guess = input.next();
+            if (guess.length() == 4)
+            return guess.toUpperCase();
+        } while (true);
+    }
+    public static Boolean VerifyGuess(String answer, String guess, Integer attemptNum){
+        int correct = 0;
+        String answerB = answer;
+        String guessB = guess;
 
-	public static void breakerAttempts(String code, Scanner input) {
-		boolean broken = false;
-		int guesses = 1;
-		while (!broken && guesses <= 10) {
-			System.out.println("Enter guess number " + guesses + ":");
-			String attempt = input.next();
-			if (checkCode(attempt, code, guesses)) {
-				broken = true;
-			}
-			guesses++;
-		}
-	}
+        int spot = 0;
+        for (int num = 0; num < answer.length(); num++) {
+            if (answer.charAt(num) == guess.charAt(num)) {
+                answerB = removeCharAt(answerB, spot);
+                guessB = removeCharAt(guessB, spot);
+                correct++;
+            } else {
+                spot++;
+            }
+        }
+        if (correct == 4) {
+            /* ZOMG YOU WIN!!! */
+            System.out.println("Correct: " + correct);
+            return true;
+        } else if (correct == 3){
+            /* If 3 is correct, 4th can't be "right color, wrong spot" */
+            System.out.println("Correct: " + correct + ", Partial: " + 0);
+            return false;
+        } else {
+            /* Next loser check... */
+            int partial = 0;
+            /* Something ain't right here... TODO: FIX THIS SHIT */
+            for (int num = 0; num < answerB.length(); num++) {
+                for (int checker = 0; checker < answerB.length(); checker++) {
+                    if (answerB.charAt(num) == guessB.charAt(checker)) {
+                        guessB = removeCharAt(guessB, num);
+                        partial++;
+                    }
+                }
+            }
 
-	public static String removeCharAt(String codeSent, int spot) {
-		int count = 0;
-		String returnCode = "";
+            System.out.println("Correct: " + correct + ", Partial: " + partial);
+            return false;
+        }
+    }
+    public static String removeCharAt(String codeSent, int spot) {
+        int count = 0;
+        String returnCode = "";
 
-		while (count < codeSent.length()) {
-			if (count != spot) {
-				returnCode += codeSent.charAt(count);
-			}
-			count++;
-		}
-
-		return returnCode;
-	}
-
-	public static boolean checkCode(String attempt, String code, int guesses) {
-		int positions = 0;
-		int colors = 0;
-		String newAttempt = "";
-		String newCode = "";
-		for (int num = 0; num < code.length(); num++) {
-			if (attempt.charAt(num) == code.charAt(num)) {
-				newAttempt = removeCharAt(attempt, num);
-				newCode = removeCharAt(code, num);
-				positions++;
-
-			}
-		}
-		if (positions == 4) {
-			System.out.println("You got it in " + guesses + " guesses");
-			return true;
-		} else {
-			for (int num = 0; num < newCode.length(); num++) {
-				for (int checker = 0; checker < newCode.length(); checker++) {
-					if (newAttempt.charAt(num) == newCode.charAt(checker)) {
-						newAttempt = removeCharAt(newAttempt, num);
-						colors++;
-					}
-				}
-			}
-
-			System.out.println(positions + " correct positions");
-			System.out.println(colors + " correct colors in wrong positions");
-			return false;
-		}
-	}
-
-	public static String getCode(Random rand) {
-		String code = "";
-		for (int num = 1; num <= 4; num++) {
-			int letter = rand.nextInt(6);
-
-			if (letter == 0) {
-				code += "R";
-			} else if (letter == 1) {
-				code += "O";
-			} else if (letter == 2) {
-				code += "Y";
-			} else if (letter == 3) {
-				code += "G";
-			} else if (letter == 4) {
-				code += "B";
-			} else {
-				code += "P";
-			}
-		}
-		return code;
-	}
-
+        while (count < codeSent.length()) {
+            if (count != spot) {
+                returnCode += codeSent.charAt(count);
+            }
+            count++;
+        }
+        return returnCode;
+    }
 }
